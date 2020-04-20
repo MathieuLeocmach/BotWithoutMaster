@@ -51,7 +51,7 @@ def show_db():
     print(f"Game.select(): {games}")
     for game in games:
         print(
-            f"game {game} name={game.name} overtone={game.overtone} channel_id={game.channel_id} guild={game.guild} channel_name={game.channel_name} start_date={game.start_date} debug={game.debug} overplayer={game.overplayer} phase={game.phase} activerogue={game.activerogue} activetone={game.activetone}")
+            f"game {game} name={game.name} overtone={game.overtone} channel_id={game.channel_id} guild={game.guild} channel_name={game.channel_name} start_date={game.start_date} debug={game.debug} overplayer={game.overplayer} phase={game.phase} activerogue={game.activerogue} activetone={game.activetone} emojis={game.emojis}")
         rogues = Rogue.select().join(RogueGame).join(Game).where(Game.channel_id == game.channel_id)
         for rogue in rogues:
             print(f"rogue {rogue.name} glum {rogue.glum} jovial {rogue.jovial}")

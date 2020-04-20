@@ -161,37 +161,42 @@ async def on_message(message):
         if emojis == {}:
             emoji_list = {}
             for i in range(1, 7):
-                emoji_list[str(i) + "_glum"] = False
-                emoji_list[str(i) + "_jovial"] = False
-            print(emoji_list)
+                emoji_list[str(i) + "Glum"] = False
+                emoji_list[str(i) + "Jovial"] = False
+            print("tous faux: " +repr(emoji_list))
 
             for server_emoji in client.emojis:
-                print(repr(server_emoji))
-                await message.channel.send(f"<:{server_emoji.name}:{server_emoji.id}>")
                 if server_emoji.name in emoji_list:
                     emoji_list[server_emoji.name] = True
 
-            print(emoji_list)
+            print("ici on sait lesquels existent: " + repr(emoji_list))
             Ok = True
             for emoji in emoji_list:
-                if emoji == False:
+                print("emoji="+repr(emoji))
+                if emoji_list[emoji] == False:
                     Ok = False
-
+            print("ici on sait si OK: " + repr(Ok))
             if not Ok:
                 print("emojis not ok")
                 # game.emoji_list=emoji_list
-                game.emoji = json.dump({})
+                game.emoji = json.dumps({})
                 if game.debug:
                     await message.channel.send(f"Emojis are not OK: {emoji_list}")
             else:
                 print("emojis are ok")
                 # game.emoji_list=emoji_list
+                emojis = {}
+                for emoji in client.emojis:
+                    if emoji.name in emoji_list:
+                        emojis[emoji.name] = emoji.id
 
-                for server_emoji in client.emojis:
-                    emojis[server_emoji.name] = server_emoji.id
                 game.emojis = json.dumps(emojis)
                 if game.debug:
-                    await message.channel.send(f"Emojis are OK: {emoji_list}")
+                    tmp_message = ""
+                    print(repr(emojis))
+                    for emoji in emojis:
+                        tmp_message += f"<:{emoji}:{emojis[emoji]}>"
+                    await message.channel.send(f"Configuration of emojis was OK: {emoji_list} {tmp_message}")
 
             game.save()
 
@@ -237,8 +242,8 @@ async def on_message(message):
             jovial = bone()
 
             if emojis != {}:
-                emote_glum = "<:" + str(glum) + "_glum:" + str(emojis[str(glum) + "_glum"]) + ">"
-                emote_jovial = "<:" + str(jovial) + "_jovial:" + str(emojis[str(jovial) + "_jovial"]) + ">"
+                emote_glum = "<:" + str(glum) + "Glum:" + str(emojis[str(glum) + "Glum"]) + ">"
+                emote_jovial = "<:" + str(jovial) + "Jovial:" + str(emojis[str(jovial) + "Jovial"]) + ">"
                 await message.channel.send(f"{emote_jovial} {emote_glum}")
                 if game.debug:
                     await message.channel.send(f"(JOVIAL={jovial} GLUM={glum})")
@@ -295,8 +300,8 @@ async def on_message(message):
                 jovial = bone()
 
                 if emojis != {}:
-                    emote_glum = "<:" + str(glum) + "_glum:" + str(emojis[str(glum) + "_glum"]) + ">"
-                    emote_jovial = "<:" + str(jovial) + "_jovial:" + str(emojis[str(jovial) + "_jovial"]) + ">"
+                    emote_glum = "<:" + str(glum) + "Glum:" + str(emojis[str(glum) + "Glum"]) + ">"
+                    emote_jovial = "<:" + str(jovial) + "Jovial:" + str(emojis[str(jovial) + "Jovial"]) + ">"
                     await message.channel.send(f"{emote_jovial} {emote_glum}")
                     if game.debug:
                         await message.channel.send(f"(JOVIAL={jovial} GLUM={glum})")
@@ -337,8 +342,11 @@ async def on_message(message):
                 game.activerogue = ""
                 game.activetone = ""
                 game.phase = ""
-                game.emoji = {}
+                game.emojis = {}
                 game.save()
+
+                if game.debug:
+                    await message.channel.send(f"emojis where reset: {game.emojis}")
 
         elif "/replace" in message.content:
             if " " in message.content:
@@ -377,7 +385,12 @@ async def on_message(message):
 
             if game.debug:
                 await message.channel.send("Debug is On. Type /toggledebug to disable.")
-                await message.channel.send(f"game.name={game.name}\ngame.channel_id={game.channel_id}\ngame.guild={game.guild}\ngame.channel_name={game.channel_name}\ngame.debug={game.debug}\ngame.overplayer={game.overplayer}\ngame.overtone={game.overtone}\ngame.phase={game.phase}\ngame.activerogue={game.activerogue}\ngame.activetone={game.activetone}\ngame.start_date={game.start_date}")
+                tmp_message = ""
+                print(repr(emojis))
+                for emoji in emojis:
+                    tmp_message += f"<:{emoji}:{emojis[emoji]}>"
+                await message.channel.send(f"game.name={game.name}\ngame.channel_id={game.channel_id}\ngame.guild={game.guild}\ngame.channel_name={game.channel_name}\ngame.debug={game.debug}\ngame.overplayer={game.overplayer}\ngame.overtone={game.overtone}\ngame.phase={game.phase}\ngame.activerogue={game.activerogue}\ngame.activetone={game.activetone}\ngame.start_date={game.start_date}\n{tmp_message}")
+
     show_db()
 
 import json            
