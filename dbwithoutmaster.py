@@ -25,40 +25,48 @@ class Game(Model):
     activetone = CharField(default="")
     activerogue = CharField(default="")
     debug = BooleanField(default=False)
+    emojis = CharField(default="")
 
     class Meta:
         database = db
 
-class Player(Model):
+class Rogue(Model):
     name = CharField(default="")
-    player_id = IntegerField(default=0)
 
     class Meta:
         database = db
 
-class GameFollowed(Model):
-    Game = ForeignKeyField(Game)
-    Follower = ForeignKeyField(Player)
+class RogueGame(Model):
+    game = ForeignKeyField(Game)
+    rogue = ForeignKeyField(Rogue)
+    glum = CharField(default="")
+    jovial = CharField(default="")
 
     class Meta:
         database = db
 
-db.connect()
+def show_db():
+    print("Showing database...")
+    games = Game.select()
+    print(f"Game.select(): {games}")
+    for game in games:
+        print(
+            f"game {game} name={game.name} overtone={game.overtone} channel_id={game.channel_id} guild={game.guild} channel_name={game.channel_name} start_date={game.start_date} debug={game.debug} overplayer={game.overplayer} phase={game.phase} activerogue={game.activerogue} activetone={game.activetone}")
+        rogues = Rogue.select().join(RogueGame).join(Game).where(Game.channel_id == game.channel_id)
+        for rogue in rogues:
+            print(f"rogue {rogue.name} glum {rogue.glum} jovial {rogue.jovial}")
+
+
+#db.connect()
 if create:
     sys.stdout.write("Creating database...")
     sys.stdout.flush()
-    db.create_tables([Game, Player, GameFollowed])
+    db.create_tables([Game, Rogue, RogueGame])
     sys.stdout.write("OK\n")
     sys.stdout.flush()
+#db.close()
 
-print("Showing database...")
-games = Game.select()
-print(f"Game.select(): {games}")
-for game in games:
-    print(f"game {game} name={game.name} overtone={game.overtone} channel_id={game.channel_id} guild={game.guild} channel_name={game.channel_name} start_date={game.start_date} debug={game.debug} overplayer={game.overplayer} phase={game.phase} activerogue={game.activerogue} activetone={game.activetone}")
-
-db.close()
-
+show_db()
 
 if __name__ == " __main__":
 
