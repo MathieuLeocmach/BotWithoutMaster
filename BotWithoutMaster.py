@@ -30,18 +30,18 @@ def new_logger():
     # add ch to logger
     logger.addHandler(ch)
 
-    
+
     # create file handler and set level to debug
     fh = logging.FileHandler("botwithoutmaster.log", mode="a", encoding="utf-8")
     fh.setLevel(logging.DEBUG)
 
     # add formatter to fh
     fh.setFormatter(formatter)
-    
+
 
     # add fh to logger
     logger.addHandler(fh)
-    
+
     return logger
 
 log=new_logger()
@@ -50,7 +50,7 @@ mydice = []
 
 def get_dice(number_to_fetch):
     global log
-    
+
     dice_list = []
     str_number_to_fetch = str(number_to_fetch)
     for essai in range(0,3):
@@ -60,12 +60,12 @@ def get_dice(number_to_fetch):
             return []
         else:
             break
-    
+
     resultat = re.findall(r"dice(\d+?)\.png", r.text, re.MULTILINE)
     if resultat == []:
         log.info("Je n'ai pas trouvé le dé dans le résultat de la page web: {}".format(repr(resultat)))
         return []
-        
+
 
     for mon_de in resultat:
         try:
@@ -74,13 +74,13 @@ def get_dice(number_to_fetch):
         except:
             log.info("mon_de n'est pas un entier: {}".format(repr(mon_de)))
             return []
-            
+
     return dice_list
 
 
 def d6():
     global log
-    
+
     r = requests.get('https://www.random.org/dice?num=1')
     if r.status_code != 200:
         log.info("Récupération d'un dé: erreur http {status_code}".format(status_code=r.status_code))
@@ -105,19 +105,19 @@ def glum_or_jovial():
 
     mon_de=mydice.pop()
     if mon_de%2 == 1:
-        glum_or_jovial = "GLUM"
+        glum_or_jovial = "SERIEUX"
     else:
-        glum_or_jovial = "JOVIAL"
+        glum_or_jovial = "COMIQUE"
     return glum_or_jovial
 
 def bone():
     global mydice, log
-    
+
     #log.info(repr(len(mydice)))
     if len(mydice) < 50:
         log.info("len(mydice)<50, fetching more bones")
         mydice = mydice + get_dice(50)
-    #log.info(mydice)    
+    #log.info(mydice)
     mydice.reverse()
     bone=mydice.pop()
     mydice.reverse()
@@ -127,14 +127,14 @@ def bone():
 @client.event
 async def on_ready():
     global mydice, log
-    
+
     mydice = get_dice(60)
 
     await client.change_presence(activity=discord.Game(name="type /info"))
 
 
     log.info("The bot is ready!")
-    
+
 @client.event
 async def on_message(message):
     global mydice, log
@@ -146,7 +146,7 @@ async def on_message(message):
         log.info("Fetching 60 new random dice... (len(mydice)=={})".format(len(mydice)))
         mydice = mydice + get_dice(60)
         log.info("Now, len(mydice)=={}".format(len(mydice)))
-        
+
     log.info(f"{message.channel.guild.name}/{message.channel.name}({message.channel.id}) from {message.author.nick}/{message.author.display_name}({message.mentions}): {message.content}")
 
     if message.content[0] == "/":
@@ -246,29 +246,29 @@ async def on_message(message):
                 emote_jovial = "<:" + str(jovial) + "Jovial:" + str(emojis[str(jovial) + "Jovial"]) + ">"
                 await message.channel.send(f"{emote_jovial} {emote_glum}")
                 if game.debug:
-                    await message.channel.send(f"(JOVIAL={jovial} GLUM={glum})")
+                    await message.channel.send(f"(COMIQUE={jovial} SERIEUX={glum})")
             else:
-                await message.channel.send(f"JOVIAL={jovial} GLUM={glum}")
+                await message.channel.send(f"COMIQUE={jovial} SERIEUX={glum}")
 
 
             if glum == jovial:
                 stymied = True
                 if glum <= 3 and jovial <= 3:
                     mystery = True
-                if game.overtone=="GLUM":
-                    TONE="JOVIAL"
-                    game.overtone="JOVIAL"
+                if game.overtone=="SERIEUX":
+                    TONE="COMIQUE"
+                    game.overtone="COMIQUE"
                 else:
-                    TONE="GLUM"
-                    game.overtone="GLUM"
+                    TONE="SERIEUX"
+                    game.overtone="SERIEUX"
             else:
                 if glum > jovial:
-                    TONE="GLUM"
+                    TONE="SERIEUX"
                 if glum < jovial:
-                    TONE="JOVIAL"
+                    TONE="COMIQUE"
                 if glum <= 3 and jovial <= 3:
                     morale = True
-            
+
             stymied_text = ""
             if stymied:
                 if mystery:
@@ -285,7 +285,7 @@ async def on_message(message):
             else:
                 overtone_text=""
 
-            await message.channel.send(f"{message.author.mention} now speaks in a {TONE} voice...{stymied_text}{morale_text}{overtone_text}")
+            await message.channel.send(f"{message.author.mention} s'exprime sur un ton {TONE} ...{stymied_text}{morale_text}{overtone_text}")
 
             if game is not None:
                 game.activerogue=message.author.mention
@@ -304,15 +304,15 @@ async def on_message(message):
                     emote_jovial = "<:" + str(jovial) + "Jovial:" + str(emojis[str(jovial) + "Jovial"]) + ">"
                     await message.channel.send(f"{emote_jovial} {emote_glum}")
                     if game.debug:
-                        await message.channel.send(f"(JOVIAL={jovial} GLUM={glum})")
+                        await message.channel.send(f"(COMIQUE={jovial} SERIEUX={glum})")
                 else:
-                    await message.channel.send(f"JOVIAL={jovial} GLUM={glum}")
+                    await message.channel.send(f"COMIQUE={jovial} SERIEUX={glum}")
 
                 if glum == jovial:
-                    if game.overtone == "GLUM":
-                        game.overtone = "JOVIAL"
+                    if game.overtone == "SERIEUX":
+                        game.overtone = "COMIQUE"
                     else:
-                        game.overtone = "GLUM"
+                        game.overtone = "SERIEUX"
                 if " " in message.content:
                     words=message.content.split(" ")
                     phase=words[1]
@@ -358,9 +358,9 @@ async def on_message(message):
                         rogue = Rogue.get(Game.channel_id == message.channel.id, Rogue.name == message.author.mention)
                         show_db()
                     else:
-                        rogue = Rogue.create(associated_game=game, name=message.author.mention, glum="GLUM", jovial="JOVIAL")
+                        rogue = Rogue.create(associated_game=game, name=message.author.mention, glum="SERIEUX", jovial="COMIQUE")
 
-                    if replaced.upper() == "GLUM":
+                    if replaced.upper() == "SERIEUX":
                         rogue.glum = his_tone
                     else:
                         rogue.jovial = his_tone
@@ -393,14 +393,15 @@ async def on_message(message):
 
     show_db()
 
-import json            
+import json
 BOT_ID=json.load(open("bot_id.json","r"))
 #log.info(repr(BOT_ID))
 #log.info(repr(get_dice(60)))
 
 #sys.exit(1)
+client.run(BOT_ID)
 
-try:
-    client.run(BOT_ID)
-except Exception as e:
-    log.info(repr(Exception))
+# try:
+#     client.run(BOT_ID)
+# except Exception as e:
+#     log.info(repr(Exception))
