@@ -363,6 +363,14 @@ async def on_message(message):
 
                     rogue.save()
 
+        elif "/tones" in message.content:
+            if " " in message.content:
+                words = message.content.split(" ")
+                if len(words) == 3:
+                    tones[0] = words[1].upper()
+                    tones[1] = words[2].upper()
+            await message.channel.send(f"Tones are now: {tones[0]} and {tones[1]}")
+
         elif "/info" in message.content:
             tmp_message = f"I am {client.user.name}, {message.author.mention}, and I am a helper for Swords Without Master games.\nUse **/rollbones** to roll bones, and **/givebones** to pass them around. \nIf you want me to keep track of what is going on, use **/startgame [phase]** to start a game, **/newphase [phase]** to launch a new phase, and **/endgame** when you are satiated or rest in peace."
             if game.overplayer != "":
