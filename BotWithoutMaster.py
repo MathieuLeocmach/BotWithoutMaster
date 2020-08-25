@@ -209,10 +209,10 @@ async def on_message(message):
                 await message.channel.send("Debug is now Off. Type /toggledebug to enable.")
         elif "/startgame" in message.content.lower():
             if game.overplayer != "":
-                await message.channel.send(f"Sorry {message.author.mention}, a game is already running. Type /info to know more.")
+                await message.channel.send(f"Désolé {message.author.mention}, une partie a déjà lieu ici. Tapez /info pour en savoir plus.")
             else:
                 TONE=glum_or_jovial()
-                out = f"Saperlipopette ! Le jeu organisé par {message.author.mention} démarre."
+                out = f"Saperlipopette ! La partie organisée par {message.author.mention} démarre."
                 if " " in message.content:
                     words=message.content.split(" ")
                     phase=words[1]
@@ -307,7 +307,7 @@ async def on_message(message):
 
         elif "/newphase" in message.content:
             if game.overplayer == "":
-                await message.channel.send(f"Sorry {message.author.mention}, you need to start a new game (/startgame) before starting a new phase.")
+                await message.channel.send(f"Désolé {message.author.mention}, vous devez d'abord commencer une partie (/startgame) avant de démarrer une nouvelle phase.")
             else:
                 glum = bone()
                 jovial = bone()
@@ -351,18 +351,18 @@ async def on_message(message):
                 game.save()
         elif "/givebones" in message.content:
             if message.mentions == []:
-                await message.channel.send("I didn't understand whom you tried to give the bones to, "+message.author.mention)
+                await message.channel.send("Je n'ai pas compris à qui vous passiez les dés, "+message.author.mention)
             else:
                 game.activerogue = message.mentions[0].mention
-                game.activetone = 0
+                game.activetone = 2
                 game.save()
-                await message.channel.send(f"{message.author.mention} gives the bones to {game.activerogue}")
+                await message.channel.send(f"{message.author.mention} donne les dés à {game.activerogue}")
 
         elif "/endgame" in message.content:
             if game.overplayer == "":
-                await message.channel.send(f"There is no game currently running here that I know of, {message.author.mention}.")
+                await message.channel.send(f"Il n'y a pas de partie en cours à ma connaissance, {message.author.mention}.")
             else:
-                await message.channel.send(f"Game run by Overplayer {game.overplayer} has now ended. I am too dumb to tell if the story was great.")
+                await message.channel.send(f"La partie commencée par {game.overplayer} est maintenant teminée. Un bougre d'extrait d'emplâtre comme moi n'est pas capable de saisir si cette partie était ou non une réussite.")
                 game.overplayer = ""
                 game.overtone = 0
                 game.activerogue = ""
@@ -402,19 +402,19 @@ async def on_message(message):
             await message.channel.send(f"Tones are now: {tones[0]} and {tones[1]}")
 
         elif "/info" in message.content:
-            tmp_message = f"I am {client.user.name}, {message.author.mention}, and I am a helper for Swords Without Master games.\nUse **/rollbones** to roll bones, and **/givebones** to pass them around. \nIf you want me to keep track of what is going on, use **/startgame [phase]** to start a game, **/newphase [phase]** to launch a new phase, and **/endgame** when you are satiated or rest in peace."
+            tmp_message = f"Je suis {client.user.name}, {message.author.mention}, et je suis à votre service pour aider à jouer à *Saperlipopette*.\nUtilise **/rollbones** pour lancer les dés, et **/givebones** pour les passer à quelqu'un d'autre. \nSi vous utilisez **/startgame [phase]** pour commencer un jeu, alors je gérerai le ton général. Utilisez alors, **/newphase [phase]** pour lancer une nouvelle phase, et **/endgame** pour terminer la partie."
             if game.overplayer != "":
                 if game.phase == "":
-                    tmp_message += f"\n_Info on game **{game.name}**:\nOverplayer is {game.overplayer} and the Overtone is currently {tones[game.overtone]}._"
+                    tmp_message += f"\n_Partie en cours **{game.name}**:\n{game.overplayer} a commencé la partie, et le ton général est actuellement {tones[game.overtone]}._"
                 else:
-                    tmp_message += f"\n_Info on game **{game.name}**:\nOverplayer is {game.overplayer} and the Overtone of the current {game.phase} phase is {tones[game.overtone]}._"
+                    tmp_message += f"\n_Partie en cours **{game.name}**:\n{game.overplayer} a commencé la partie, et le ton général de la phase {game.phase} actuelle est {tones[game.overtone]}._"
                 if game.activerogue != "":
-                    if game.activetone == "":
-                        tmp_message += f"\nActive rogue is {game.activerogue}, they have not rolled the bones yet.\n"
+                    if game.activetone not in [0,1]:
+                        tmp_message += f"\n{game.activerogue} a le contrôle du héro et n'a pas encore lancé les dés.\n"
                     else:
-                        tmp_message += f"\nActive rogue is {game.activerogue}, currently speaking in a {tones[game.activetone]} tone.\n"
+                        tmp_message += f"\n{game.activerogue} a le contrôle du héro et narre sur un ton {tones[game.activetone]}.\n"
             else:
-                tmp_message += "\n_There is no game currently running in this channel._"
+                tmp_message += "\n_Il n'y a aucune partie en cours sur ce canal._"
             await message.channel.send(tmp_message)
 
             if game.debug:
