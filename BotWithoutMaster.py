@@ -214,10 +214,10 @@ async def on_message(message):
                 if " " in message.content:
                     words=message.content.split(" ")
                     phase=words[1]
-                    await message.channel.send(f"Gather around fellow rogues ! Overplayer is {message.author.mention}, they will begin a {TONE} tale with a {phase} phase.")
+                    await message.channel.send(f"Gather around fellow rogues ! Overplayer is {message.author.mention}, they will begin a {tones[TONE]} tale with a {phase} phase.")
                 else:
                     phase=""
-                    await message.channel.send(f"Gather around fellow rogues ! Overplayer is {message.author.mention}, they will begin a {TONE} tale.")
+                    await message.channel.send(f"Gather around fellow rogues ! Overplayer is {message.author.mention}, they will begin a {tones[TONE]} tale.")
                 game.overplayer=message.author.mention
                 game.overtone=TONE
                 game.activerogue=""
