@@ -1,6 +1,7 @@
 import discord
 import requests
 from random import randint
+from collections import deque
 import re
 import os
 import sys
@@ -45,8 +46,8 @@ def new_logger():
     return logger
 
 log=new_logger()
-mydice = []
-tones = ["SERIEUX", "COMIQUE"]
+mydice = deque()
+tones = ["COMIQUE", "SERIEUX"]
 
 
 def get_dice(number_to_fetch):
@@ -105,11 +106,7 @@ def glum_or_jovial():
     global mydice, log
 
     mon_de=mydice.pop()
-    if mon_de%2 == 1:
-        glum_or_jovial = "SERIEUX"
-    else:
-        glum_or_jovial = "COMIQUE"
-    return glum_or_jovial
+    return mon_de%2
 
 def bone():
     global mydice, log
@@ -119,7 +116,7 @@ def bone():
         log.info("len(mydice)<50, fetching more bones")
         mydice.extend(get_dice(50))
     #log.info(mydice)
-    bone=mydice.pop(0)
+    bone=mydice.popleft()
     #log.info(mydice)
     return bone
 
@@ -127,7 +124,7 @@ def bone():
 async def on_ready():
     global mydice, log
 
-    mydice = get_dice(60)
+    mydice = deque(get_dice(60))
 
     await client.change_presence(activity=discord.Game(name="type /info"))
 
@@ -136,14 +133,14 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global mydice, log
+    global mydice, log, tones
 
     if message.author == client.user:  # I don't react at my own words
         return
 
     if len(mydice) < 30:   # I make sure I allways have a full bag of dice rolls
         log.info("Fetching 60 new random dice... (len(mydice)=={})".format(len(mydice)))
-        mydice = mydice + get_dice(60)
+        mydice.extend(get_dice(60))
         log.info("Now, len(mydice)=={}".format(len(mydice)))
 
     log.info(f"{message.channel.guild.name}/{message.channel.name}({message.channel.id}) from {message.author.nick}/{message.author.display_name}({message.mentions}): {message.content}")
@@ -245,26 +242,26 @@ async def on_message(message):
                 emote_jovial = "<:" + str(jovial) + "Jovial:" + str(emojis[str(jovial) + "Jovial"]) + ">"
                 await message.channel.send(f"{emote_jovial} {emote_glum}")
                 if game.debug:
-                    await message.channel.send(f"(COMIQUE={jovial} SERIEUX={glum})")
+                    await message.channel.send(f"({tones[0]}={jovial} {tones[1]}={glum})")
             else:
-                await message.channel.send(f"COMIQUE={jovial} SERIEUX={glum}")
+                await message.channel.send(f"{tones[0]}={jovial} {tones[1]}={glum}")
 
 
             if glum == jovial:
                 stymied = True
                 if glum <= 3 and jovial <= 3:
                     mystery = True
-                if game.overtone=="SERIEUX":
-                    TONE="COMIQUE"
-                    game.overtone="COMIQUE"
+                if game.overtone==0:
+                    TONE=1
+                    game.overtone=1
                 else:
-                    TONE="SERIEUX"
-                    game.overtone="SERIEUX"
+                    TONE=0
+                    game.overtone=0
             else:
                 if glum > jovial:
-                    TONE="SERIEUX"
+                    TONE=1
                 if glum < jovial:
-                    TONE="COMIQUE"
+                    TONE=0
                 if glum <= 3 and jovial <= 3:
                     morale = True
 
@@ -280,11 +277,11 @@ async def on_message(message):
                 morale_text = "\nThey just learned a MORALE. Write it down !"
 
             if game.overplayer != "":
-                overtone_text=f"\nThe Overtone is {game.overtone}."
+                overtone_text=f"\nThe Overtone is {tones[game.overtone]}."
             else:
                 overtone_text=""
 
-            await message.channel.send(f"{message.author.mention} s'exprime sur un ton {TONE} ...{stymied_text}{morale_text}{overtone_text}")
+            await message.channel.send(f"{message.author.mention} s'exprime sur un ton {tones[TONE]} ...{stymied_text}{morale_text}{overtone_text}")
 
             if game is not None:
                 game.activerogue=message.author.mention
@@ -303,22 +300,22 @@ async def on_message(message):
                     emote_jovial = "<:" + str(jovial) + "Jovial:" + str(emojis[str(jovial) + "Jovial"]) + ">"
                     await message.channel.send(f"{emote_jovial} {emote_glum}")
                     if game.debug:
-                        await message.channel.send(f"(COMIQUE={jovial} SERIEUX={glum})")
+                        await message.channel.send(f"({tones[0]}={jovial} {tones[1]}={glum})")
                 else:
-                    await message.channel.send(f"COMIQUE={jovial} SERIEUX={glum}")
+                    await message.channel.send(f"{tones[0]}={jovial} {tones[1]}={glum}")
 
                 if glum == jovial:
-                    if game.overtone == "SERIEUX":
-                        game.overtone = "COMIQUE"
+                    if game.overtone == 0:
+                        game.overtone = 1
                     else:
-                        game.overtone = "SERIEUX"
+                        game.overtone = 0
                 if " " in message.content:
                     words=message.content.split(" ")
                     phase=words[1]
-                    await message.channel.send(f"Our Overplayer {game.overplayer} launched a new {phase} phase, and speaks in a {game.overtone} voice...")
+                    await message.channel.send(f"Our Overplayer {game.overplayer} launched a new {phase} phase, and speaks in a {tones[game.overtone]} voice...")
                 else:
                     phase=""
-                    await message.channel.send(f"Our Overplayer {game.overplayer} launched a new phase, and speaks in a {game.overtone} voice...")
+                    await message.channel.send(f"Our Overplayer {game.overplayer} launched a new phase, and speaks in a {tones[game.overtone]} voice...")
                 game.overplayer = message.author.mention
                 game.phase = phase
                 game.save()
@@ -327,7 +324,7 @@ async def on_message(message):
                 await message.channel.send("I didn't understand whom you tried to give the bones to, "+message.author.mention)
             else:
                 game.activerogue = message.mentions[0].mention
-                game.activetone = ""
+                game.activetone = 0
                 game.save()
                 await message.channel.send(f"{message.author.mention} gives the bones to {game.activerogue}")
 
@@ -337,9 +334,9 @@ async def on_message(message):
             else:
                 await message.channel.send(f"Game run by Overplayer {game.overplayer} has now ended. I am too dumb to tell if the story was great.")
                 game.overplayer = ""
-                game.overtone = ""
+                game.overtone = 0
                 game.activerogue = ""
-                game.activetone = ""
+                game.activetone = 0
                 game.phase = ""
                 game.emojis = {}
                 game.save()
@@ -357,9 +354,9 @@ async def on_message(message):
                         rogue = Rogue.get(Game.channel_id == message.channel.id, Rogue.name == message.author.mention)
                         show_db()
                     else:
-                        rogue = Rogue.create(associated_game=game, name=message.author.mention, glum="SERIEUX", jovial="COMIQUE")
+                        rogue = Rogue.create(associated_game=game, name=message.author.mention, glum=tones[1], jovial=tones[0])
 
-                    if replaced.upper() == "SERIEUX":
+                    if replaced.upper() == tones[0]:
                         rogue.glum = his_tone
                     else:
                         rogue.jovial = his_tone
@@ -370,14 +367,14 @@ async def on_message(message):
             tmp_message = f"I am {client.user.name}, {message.author.mention}, and I am a helper for Swords Without Master games.\nUse **/rollbones** to roll bones, and **/givebones** to pass them around. \nIf you want me to keep track of what is going on, use **/startgame [phase]** to start a game, **/newphase [phase]** to launch a new phase, and **/endgame** when you are satiated or rest in peace."
             if game.overplayer != "":
                 if game.phase == "":
-                    tmp_message += f"\n_Info on game **{game.name}**:\nOverplayer is {game.overplayer} and the Overtone is currently {game.overtone}._"
+                    tmp_message += f"\n_Info on game **{game.name}**:\nOverplayer is {game.overplayer} and the Overtone is currently {tones[game.overtone]}._"
                 else:
-                    tmp_message += f"\n_Info on game **{game.name}**:\nOverplayer is {game.overplayer} and the Overtone of the current {game.phase} phase is {game.overtone}._"
+                    tmp_message += f"\n_Info on game **{game.name}**:\nOverplayer is {game.overplayer} and the Overtone of the current {game.phase} phase is {tones[game.overtone]}._"
                 if game.activerogue != "":
                     if game.activetone == "":
                         tmp_message += f"\nActive rogue is {game.activerogue}, they have not rolled the bones yet.\n"
                     else:
-                        tmp_message += f"\nActive rogue is {game.activerogue}, currently speaking in a {game.activetone} tone.\n"
+                        tmp_message += f"\nActive rogue is {game.activerogue}, currently speaking in a {tones[game.activetone]} tone.\n"
             else:
                 tmp_message += "\n_There is no game currently running in this channel._"
             await message.channel.send(tmp_message)
@@ -388,7 +385,7 @@ async def on_message(message):
                 print(repr(emojis))
                 for emoji in emojis:
                     tmp_message += f"<:{emoji}:{emojis[emoji]}>"
-                await message.channel.send(f"game.name={game.name}\ngame.channel_id={game.channel_id}\ngame.guild={game.guild}\ngame.channel_name={game.channel_name}\ngame.debug={game.debug}\ngame.overplayer={game.overplayer}\ngame.overtone={game.overtone}\ngame.phase={game.phase}\ngame.activerogue={game.activerogue}\ngame.activetone={game.activetone}\ngame.start_date={game.start_date}\n{tmp_message}")
+                await message.channel.send(f"game.name={game.name}\ngame.channel_id={game.channel_id}\ngame.guild={game.guild}\ngame.channel_name={game.channel_name}\ngame.debug={game.debug}\ngame.overplayer={game.overplayer}\ngame.overtone={tones[game.overtone]}\ngame.phase={game.phase}\ngame.activerogue={game.activerogue}\ngame.activetone={tones[game.activetone]}\ngame.start_date={game.start_date}\n{tmp_message}")
 
     show_db()
 
