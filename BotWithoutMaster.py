@@ -5,6 +5,7 @@ from collections import deque
 import re
 import os
 import sys
+import unidecode
 from datetime import date, datetime
 from dbwithoutmaster import db, Game, Rogue, RogueGame, show_db
 
@@ -211,13 +212,23 @@ async def on_message(message):
                 await message.channel.send(f"Sorry {message.author.mention}, a game is already running. Type /info to know more.")
             else:
                 TONE=glum_or_jovial()
+                out = f"Saperlipopette ! Le jeu organisé par {message.author.mention} démarre."
                 if " " in message.content:
                     words=message.content.split(" ")
                     phase=words[1]
-                    await message.channel.send(f"Gather around fellow rogues ! Overplayer is {message.author.mention}, they will begin a {tones[TONE]} tale with a {phase} phase.")
+                    if unidecode.unidecode(phase).upper() == "REVELATION":
+                        await message.channel.send(f"On ne peut commencer par une phase {phase}")
+                        return
+                    #await message.channel.send(f"Gather around fellow rogues ! Overplayer is {message.author.mention}, they will begin a {tones[TONE]} tale with a {phase} phase.")
+                    out += f"\nCette aventure commence par une phase **{phase}** sur un ton {tones[TONE]}."
                 else:
                     phase=""
-                    await message.channel.send(f"Gather around fellow rogues ! Overplayer is {message.author.mention}, they will begin a {tones[TONE]} tale.")
+                    out += f"\nCette aventure commence sur un ton {tones[TONE]}."
+                if TONE==0:
+                    out += "\nN'oubliez pas de commencer par un incident *semble-t'il* sans conséquences."
+                else:
+                    out += "\nN'oubliez pas de commencer par une actualité."
+                await message.channel.send(out)
                 game.overplayer=message.author.mention
                 game.overtone=TONE
                 game.activerogue=""
@@ -268,16 +279,22 @@ async def on_message(message):
             stymied_text = ""
             if stymied:
                 if mystery:
-                    stymied_text = "\nThey are stymied by what they just discovered. Write down a Mystery !"
+                    #stymied_text = "\nThey are stymied by what they just discovered. Write down a Mystery !"
+                    stymied_text = "\nVous êtes contrariés par les événements et la phase s'interrompt après ceci."
                 else:
-                    stymied_text = "\nThey are STYMIED by what just happened."
+                    #stymied_text = "\nThey are STYMIED by what just happened."
+                    stymied_text = "\nVous êtes contrariés par les événements."
+                if unidecode.unidecode(game.phase).upper() == "REVELATION":
+                    stymied_text += "\nVotre hypothèse de travail est contredite (Inversion de la chronologie, inversion des rôles)."
 
             morale_text = ""
             if morale:
-                morale_text = "\nThey just learned a MORALE. Write it down !"
+                if unidecode.unidecode(game.phase).upper() == "REVELATION":
+                    morale_text = "\nL'indice exagère votre hypothèse de travail (Plus haut, plus de personnes impliquées, multiplication des objets)."
 
             if game.overplayer != "":
-                overtone_text=f"\nThe Overtone is {tones[game.overtone]}."
+                #overtone_text=f"\nThe Overtone is {tones[game.overtone]}."
+                overtone_text=f"\nLe ton général est {tones[game.overtone]}."
             else:
                 overtone_text=""
 
@@ -309,13 +326,26 @@ async def on_message(message):
                         game.overtone = 1
                     else:
                         game.overtone = 0
+                else:
+                    if glum > jovial:
+                        game.overtone=1
+                    if glum < jovial:
+                        game.overtone=0
+                out = f"{message.author} commence une nouvelle phase"
                 if " " in message.content:
                     words=message.content.split(" ")
                     phase=words[1]
-                    await message.channel.send(f"Our Overplayer {game.overplayer} launched a new {phase} phase, and speaks in a {tones[game.overtone]} voice...")
+                    out += f" {phase}"
+                    #await message.channel.send(f"Our Overplayer {game.overplayer} launched a new {phase} phase, and speaks in a {tones[game.overtone]} voice...")
                 else:
                     phase=""
-                    await message.channel.send(f"Our Overplayer {game.overplayer} launched a new phase, and speaks in a {tones[game.overtone]} voice...")
+                    #await message.channel.send(f"Our Overplayer {game.overplayer} launched a new phase, and speaks in a {tones[game.overtone]} voice...")
+                out += f" sur un ton {tones[game.overtone]}."
+                if game.overtone==0:
+                    out += "\nN'oubliez pas de commencer par un incident *semble-t'il* sans conséquences."
+                else:
+                    out += "\nN'oubliez pas de commencer par une actualité."
+                await message.channel.send(out)
                 game.overplayer = message.author.mention
                 game.phase = phase
                 game.save()
