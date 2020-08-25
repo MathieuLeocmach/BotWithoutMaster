@@ -46,6 +46,7 @@ def new_logger():
 
 log=new_logger()
 mydice = []
+tones = ["SERIEUX", "COMIQUE"]
 
 
 def get_dice(number_to_fetch):
@@ -116,11 +117,9 @@ def bone():
     #log.info(repr(len(mydice)))
     if len(mydice) < 50:
         log.info("len(mydice)<50, fetching more bones")
-        mydice = mydice + get_dice(50)
+        mydice.extend(get_dice(50))
     #log.info(mydice)
-    mydice.reverse()
-    bone=mydice.pop()
-    mydice.reverse()
+    bone=mydice.pop(0)
     #log.info(mydice)
     return bone
 
